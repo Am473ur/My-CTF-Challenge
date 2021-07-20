@@ -1,2 +1,3 @@
 # My-CTF-Challenge
-Collections of all CTF challenges made by me.
+
+Part of the CTF challenges made by me.
