@@ -1,0 +1,53 @@
+from Crypto.Util.number import *
+from PIL import Image
+import numpy as np
+from random import randint
+from gmpy2 import lcm
+from time import time
+
+f = open("./data", "r")
+
+enc_array = [[int(f.readline(), 16) for i in range(56)] for j in range(56)]
+
+
+class Homo:
+    def __init__(self, p, q, g):
+        n = p*q
+        self.Lcm, self.g, self.n = lcm(p-1, q-1), g, n
+
+    def enc(self, m):
+        n = self.n
+        return (pow(self.g, int(m), n*n)*pow(randint(1, n), n, n*n)) % (n*n)
+
+    def dec(self, c):
+        Lcm, g, n = self.Lcm, self.g, self.n
+        m_c = self.L(pow(int(c), Lcm, n*n), n)
+        m_g = self.L(pow(g, Lcm, n*n), n)
+        m = m_c*inverse(m_g, n) % n
+        return m
+
+    def L(self, u, n): return (u-1)//n
+
+
+p = 920030180993553288263122542539734999091858791109976215768537891947750855619097640972095906356285305444101336426283673752755681547142872561321116642210086677
+q = 20036833404343748910594730341422855344330336172344618244064374346563598951077324170195570326117609597963864455286619066691990061602675671685401923755961088093
+g = 99894228586367782940715460732971967417359410558715186789679488951080212107512884192976002563404881263875114900183845944243751294600634946131559701908524899495387780188074842981190381617301097312646907480816373003121403029154865843313001145153263200356271270964096284006748227606839491672635131818273934109984977288621523498782962389115299664149676881349445940131040928322172748228670542470966453917916224551852329336572423059849239115479150176538160893340622774682474615303826972971312087884483400100816655408278649954266707268236152380355955111697822333005733513834283677509165970313043388621472231706074701389916165894223877
+
+ho = Homo(p, q, g)
+img = Image.new("L", (56, 56))
+img_array = np.array(img)
+flag = ""
+
+for i in range(len(enc_array)):
+    for j in range(len(enc_array[i])):
+        m = ho.dec(enc_array[i][j])
+        flag += str(m//256)
+        img_array[i][j] = m % 256
+
+dec_img = Image.fromarray(img_array)
+dec_img.save("dec.png")
+
+for i in range(8):
+    m = long_to_bytes(int(flag+"0"*i, 2))
+    if m[:4] == b"NCTF":
+        print(m)
